@@ -321,18 +321,22 @@ client.on("signal", (data) => {
 
 ---
 
-## POC Implementation (Record Then Analyze)
+## POC Implementation (Local Open-Source DAM)
 
-This repository now includes a working proof of concept aligned to the validated hosted KV flow:
+This repository now includes a local-first proof of concept using the open-source
+`KintsugiHealth/dam` model instead of hosted API prediction endpoints.
+
+### Architecture
 
 - Browser records a voice sample (`WEBM` or `WAV`)
-- App backend receives the audio via multipart upload
-- Backend calls KV `initiate`, `predict`, then polls `get result`
-- Backend returns a normalized, app-owned findings payload
+- Node backend receives the audio via multipart upload
+- Node backend calls a local Python DAM inference service (`/infer`)
+- Python service runs `Pipeline().run_on_file(...)` and returns depression/anxiety outputs
+- Node backend normalizes the response into a stable app contract
 
 ### Run The POC
 
-1. Install dependencies:
+1. Install Node dependencies:
 
 ```bash
 npm install
@@ -344,11 +348,14 @@ npm install
 cp .env.example .env
 ```
 
-3. Set your KV credentials in `.env`:
+3. Start local DAM service (see `local_model_service/README.md`):
 
-- `KV_API_KEY`
+```bash
+cd local_model_service
+uvicorn app:app --host 127.0.0.1 --port 8001 --reload
+```
 
-4. Start the app:
+4. Start Node app:
 
 ```bash
 npm start
@@ -356,42 +363,71 @@ npm start
 
 5. Open `http://localhost:3000`, record at least 30 seconds of speech, then click **Analyze**.
 
+### Run With Docker Compose
+
+You can run both services (`app` + `local-model-service`) with one command.
+
+1. Clone the DAM model repository on your host machine:
+
+```bash
+git clone https://huggingface.co/KintsugiHealth/dam ./dam-model
+```
+
+2. Start both services:
+
+```bash
+docker compose up
+```
+
+3. Open `http://localhost:3000`.
+
+#### DAM repo mount configuration
+
+The compose file mounts a host DAM repo path into the Python service at `/opt/dam`
+and sets `PYTHONPATH=/opt/dam`.
+
+- Default host path: `./dam-model`
+- Override with `DAM_REPO_PATH` if your DAM clone is elsewhere:
+
+```bash
+DAM_REPO_PATH=/absolute/path/to/dam docker compose up
+```
+
 ### Findings Response Contract
 
 The frontend consumes a normalized contract from `POST /api/findings`:
 
 ```json
 {
-  "sessionId": "session-abc",
   "status": "completed",
   "findings": {
-    "depression": "mild_to_moderate",
-    "anxiety": "moderate"
+    "depression": {
+      "score": 1,
+      "severity": "mild_to_moderate"
+    },
+    "anxiety": {
+      "score": 2,
+      "severity": "moderate"
+    }
   },
   "vendor": {
-    "modelCategory": "depression, anxiety",
-    "modelGranularity": "severity",
-    "isCalibrated": true
+    "provider": "local_dam",
+    "model": "KintsugiHealth/dam",
+    "quantized": true
   },
-  "error": null,
-  "rawStatus": "completed"
+  "error": null
 }
 ```
 
-KV-specific response fields stay backend-only except for the intentionally exposed `vendor` metadata object.
-
 ### POC Guardrails
 
-- Audio is handled in memory only (`multer.memoryStorage()`), with no intentional disk persistence.
+- Node receives audio in memory only (`multer.memoryStorage()`), with no persistent storage in Node.
 - Client enforces minimum duration before submit; backend enforces it again (`MIN_AUDIO_DURATION_MS`, default 30000).
 - Accepted upload MIME types are constrained to `audio/webm` and `audio/wav` variants.
 - The UI frames outputs as biomarker findings and not diagnosis.
 
-### Hosted API Privacy Tradeoffs
+### Local Inference Data-Control Notes
 
-This POC avoids local persistence on our side, but KV processing occurs through a hosted external API.
-That means:
-
-- Audio still leaves the browser and is transmitted to KV for inference.
-- Final data handling guarantees ultimately depend on KV platform controls and contract terms.
-- For stricter ownership/compliance boundaries, a future self-hosted path is still recommended.
+- This removes hosted prediction dependencies and keeps inference execution under your infrastructure control.
+- The current DAM reference pipeline requires file-path inference (`run_on_file`), so the Python service uses temporary files that are deleted immediately post-inference.
+- For stronger guarantees, run the service on encrypted ephemeral storage or `tmpfs`.

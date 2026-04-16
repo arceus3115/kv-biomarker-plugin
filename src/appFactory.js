@@ -1,4 +1,3 @@
-const crypto = require("node:crypto");
 const path = require("node:path");
 const express = require("express");
 const multer = require("multer");
@@ -21,7 +20,7 @@ function createUploader(maxBytes) {
   });
 }
 
-function createApp({ kvClient, uploadConfig }) {
+function createApp({ localModelClient, uploadConfig }) {
   const app = express();
   const uploader = createUploader(uploadConfig.maxBytes);
 
@@ -58,24 +57,19 @@ function createApp({ kvClient, uploadConfig }) {
         });
       }
 
-      const userId = req.body.userId || crypto.randomUUID();
-      const sessionId = await kvClient.initiate({ userId });
-
-      await kvClient.predict({
-        sessionId,
+      const localResult = await localModelClient.infer({
         buffer: req.file.buffer,
         mimeType: req.file.mimetype,
         filename: req.file.originalname || "recording.webm",
+        durationMs,
       });
-
-      const kvResult = await kvClient.pollResult(sessionId);
-      const normalized = normalizeFindings({ ...kvResult, session_id: sessionId });
+      const normalized = normalizeFindings(localResult);
 
       return res.status(200).json(normalized);
     } catch (error) {
       return res.status(502).json({
-        error: "kv_inference_failed",
-        message: "Unable to retrieve findings from KV.",
+        error: "local_inference_failed",
+        message: "Unable to retrieve findings from local DAM service.",
         details: error.message,
       });
     }

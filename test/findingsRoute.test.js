@@ -5,20 +5,11 @@ const { createApp } = require("../src/appFactory");
 
 function makeKvClient() {
   return {
-    async initiate() {
-      return "session-abc";
-    },
-    async predict() {
-      return {};
-    },
-    async pollResult() {
+    async infer() {
       return {
-        status: "completed",
-        predicted_score_depression: "mild_to_moderate",
-        predicted_score_anxiety: "moderate",
-        model_category: "depression, anxiety",
-        model_granularity: "severity",
-        is_calibrated: true,
+        depression: 1,
+        anxiety: 2,
+        quantized: true,
       };
     },
   };
@@ -26,7 +17,7 @@ function makeKvClient() {
 
 test("POST /api/findings returns normalized findings on success", async () => {
   const app = createApp({
-    kvClient: makeKvClient(),
+    localModelClient: makeKvClient(),
     uploadConfig: { maxBytes: 10 * 1024 * 1024, minDurationMs: 30000 },
   });
 
@@ -39,14 +30,16 @@ test("POST /api/findings returns normalized findings on success", async () => {
     });
 
   assert.equal(response.status, 200);
-  assert.equal(response.body.sessionId, "session-abc");
-  assert.equal(response.body.findings.depression, "mild_to_moderate");
-  assert.equal(response.body.findings.anxiety, "moderate");
+  assert.equal(response.body.findings.depression.score, 1);
+  assert.equal(response.body.findings.depression.severity, "mild_to_moderate");
+  assert.equal(response.body.findings.anxiety.score, 2);
+  assert.equal(response.body.findings.anxiety.severity, "moderate");
+  assert.equal(response.body.vendor.provider, "local_dam");
 });
 
 test("POST /api/findings rejects short recordings", async () => {
   const app = createApp({
-    kvClient: makeKvClient(),
+    localModelClient: makeKvClient(),
     uploadConfig: { maxBytes: 10 * 1024 * 1024, minDurationMs: 30000 },
   });
 
@@ -64,7 +57,7 @@ test("POST /api/findings rejects short recordings", async () => {
 
 test("POST /api/findings rejects unsupported MIME type", async () => {
   const app = createApp({
-    kvClient: makeKvClient(),
+    localModelClient: makeKvClient(),
     uploadConfig: { maxBytes: 10 * 1024 * 1024, minDurationMs: 30000 },
   });
 

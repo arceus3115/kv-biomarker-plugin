@@ -1,22 +1,43 @@
-function normalizeFindings(result) {
-  const status = result.status || "unknown";
-  const findings = {
-    depression: result.predicted_score_depression || result.predicted_score || null,
-    anxiety: result.predicted_score_anxiety || null,
-  };
+const DEPRESSION_MAP = {
+  0: "no_depression",
+  1: "mild_to_moderate",
+  2: "severe",
+};
 
+const ANXIETY_MAP = {
+  0: "no_anxiety",
+  1: "mild",
+  2: "moderate",
+  3: "severe",
+};
+
+function toSeverityLabel(value, mapping) {
+  if (!Number.isFinite(value)) {
+    return null;
+  }
+
+  return mapping[value] || null;
+}
+
+function normalizeFindings(localResult) {
   return {
-    sessionId: result.session_id || null,
-    status,
-    findings,
-    vendor: {
-      modelCategory: result.model_category || null,
-      modelGranularity: result.model_granularity || null,
-      isCalibrated:
-        typeof result.is_calibrated === "boolean" ? result.is_calibrated : null,
+    status: "completed",
+    findings: {
+      depression: {
+        score: localResult.depression,
+        severity: toSeverityLabel(localResult.depression, DEPRESSION_MAP),
+      },
+      anxiety: {
+        score: localResult.anxiety,
+        severity: toSeverityLabel(localResult.anxiety, ANXIETY_MAP),
+      },
     },
-    error: result.predict_error || null,
-    rawStatus: result.status || null,
+    vendor: {
+      provider: "local_dam",
+      model: "KintsugiHealth/dam",
+      quantized: Boolean(localResult.quantized),
+    },
+    error: null,
   };
 }
 

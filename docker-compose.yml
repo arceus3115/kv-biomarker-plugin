@@ -1,0 +1,34 @@
+services:
+  app:
+    image: node:20-bookworm
+    working_dir: /workspace
+    command: sh -c "npm install && npm start"
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: 3000
+      LOCAL_MODEL_SERVICE_URL: http://local-model-service:8001
+      LOCAL_MODEL_INFER_PATH: /infer
+      LOCAL_MODEL_TIMEOUT_MS: 120000
+      LOCAL_MODEL_QUANTIZE: "true"
+      MAX_UPLOAD_BYTES: 10485760
+      MIN_AUDIO_DURATION_MS: 30000
+    volumes:
+      - ./:/workspace
+    depends_on:
+      - local-model-service
+
+  local-model-service:
+    image: python:3.11-slim
+    working_dir: /workspace/local_model_service
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.txt &&
+             uvicorn app:app --host 0.0.0.0 --port 8001"
+    ports:
+      - "8001:8001"
+    environment:
+      # The DAM repo is expected to be cloned on the host and mounted below.
+      PYTHONPATH: /opt/dam
+    volumes:
+      - ./:/workspace
+      - ${DAM_REPO_PATH:-./dam-model}:/opt/dam

@@ -1,16 +1,16 @@
 require("dotenv").config();
 
 const { config } = require("./config");
-const { createKvClient } = require("./kvClient");
+const { createLocalModelClient } = require("./localModelClient");
 const { createApp } = require("./appFactory");
 
-const kvClient = createKvClient(config.kv);
+const localModelClient = createLocalModelClient(config.localModel);
 const app = createApp({
-  kvClient,
+  localModelClient,
   uploadConfig: config.upload,
 });
 
 app.listen(config.port, () => {
   // Keep logs metadata-only; never log audio payloads.
-  console.log(`KV POC server listening on http://localhost:${config.port}`);
+  console.log(`Local DAM POC server listening on http://localhost:${config.port}`);
 });

@@ -4,28 +4,28 @@ const { normalizeFindings } = require("../src/normalizeKvResponse");
 
 test("normalizeFindings maps vendor response fields to app contract", () => {
   const payload = normalizeFindings({
-    session_id: "session-123",
-    status: "completed",
-    predicted_score_depression: "mild_to_moderate",
-    predicted_score_anxiety: "moderate",
-    model_category: "depression, anxiety",
-    model_granularity: "severity",
-    is_calibrated: true,
+    depression: 2,
+    anxiety: 3,
+    quantized: true,
   });
 
   assert.deepEqual(payload, {
-    sessionId: "session-123",
     status: "completed",
     findings: {
-      depression: "mild_to_moderate",
-      anxiety: "moderate",
+      depression: {
+        score: 2,
+        severity: "severe",
+      },
+      anxiety: {
+        score: 3,
+        severity: "severe",
+      },
     },
     vendor: {
-      modelCategory: "depression, anxiety",
-      modelGranularity: "severity",
-      isCalibrated: true,
+      provider: "local_dam",
+      model: "KintsugiHealth/dam",
+      quantized: true,
     },
     error: null,
-    rawStatus: "completed",
   });
 });

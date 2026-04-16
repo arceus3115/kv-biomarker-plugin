@@ -3,21 +3,13 @@ function parseNumber(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function buildResultPath(template, sessionId) {
-  return template.replace("{session_id}", encodeURIComponent(sessionId));
-}
-
 const config = {
   port: parseNumber(process.env.PORT, 3000),
-  kv: {
-    baseUrl: process.env.KV_API_BASE_URL || "https://api.kintsugihealth.com",
-    apiKey: process.env.KV_API_KEY || "",
-    initiatePath: process.env.KV_INITIATE_PATH || "/v1/initiate",
-    predictPath: process.env.KV_PREDICT_PATH || "/v2/prediction/",
-    resultPathTemplate:
-      process.env.KV_RESULT_PATH_TEMPLATE || "/v2/predict/sessions/{session_id}",
-    pollIntervalMs: parseNumber(process.env.KV_POLL_INTERVAL_MS, 1000),
-    pollTimeoutMs: parseNumber(process.env.KV_POLL_TIMEOUT_MS, 30000),
+  localModel: {
+    serviceUrl: process.env.LOCAL_MODEL_SERVICE_URL || "http://127.0.0.1:8001",
+    inferPath: process.env.LOCAL_MODEL_INFER_PATH || "/infer",
+    timeoutMs: parseNumber(process.env.LOCAL_MODEL_TIMEOUT_MS, 120000),
+    quantize: process.env.LOCAL_MODEL_QUANTIZE !== "false",
   },
   upload: {
     maxBytes: parseNumber(process.env.MAX_UPLOAD_BYTES, 10 * 1024 * 1024),
@@ -27,5 +19,4 @@ const config = {
 
 module.exports = {
   config,
-  buildResultPath,
 };
