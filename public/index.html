@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KV Recording POC</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 760px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        line-height: 1.5;
+      }
+      .card {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+      button {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      pre {
+        background: #f6f8fa;
+        padding: 1rem;
+        overflow-x: auto;
+        border-radius: 6px;
+      }
+      .muted {
+        color: #666;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>KV Recording POC</h1>
+    <p class="muted">
+      Record a sample (minimum 30 seconds), submit to KV, and return biomarker
+      findings.
+    </p>
+
+    <section class="card">
+      <h2>Record</h2>
+      <p>Duration: <strong id="duration">0.0s</strong></p>
+      <button id="startBtn">Start recording</button>
+      <button id="stopBtn" disabled>Stop recording</button>
+      <button id="analyzeBtn" disabled>Analyze</button>
+      <p id="status" class="muted">Ready.</p>
+    </section>
+
+    <section class="card">
+      <h2>Findings</h2>
+      <pre id="findings">No findings yet.</pre>
+    </section>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
