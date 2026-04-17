@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "smoke:findings": "bash scripts/smoke-findings.sh"
   },
   "keywords": [],
   "author": "",

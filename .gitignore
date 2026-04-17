@@ -1,3 +1,19 @@
 node_modules/
 .env
 npm-debug.log*
+Dockerfile.app
+local_model_service/Dockerfile
+
+# Local model assets and temporary artifacts
+*.ckpt
+*.pt
+*.pth
+*.safetensors
+*.bin
+
+# Ignore nested git metadata if model code is vendored locally
+dam/.git/
+
+# Python cache/build artifacts
+__pycache__/
+*.py[cod]

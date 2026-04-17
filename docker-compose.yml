@@ -1,8 +1,8 @@
 services:
   app:
-    image: node:20-bookworm
-    working_dir: /workspace
-    command: sh -c "npm install && npm start"
+    build:
+      context: .
+      dockerfile: Dockerfile.app
     ports:
       - "3000:3000"
     environment:
@@ -13,22 +13,38 @@ services:
       LOCAL_MODEL_QUANTIZE: "true"
       MAX_UPLOAD_BYTES: 10485760
       MIN_AUDIO_DURATION_MS: 30000
-    volumes:
-      - ./:/workspace
     depends_on:
-      - local-model-service
+      local-model-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   local-model-service:
-    image: python:3.11-slim
-    working_dir: /workspace/local_model_service
-    command: >
-      sh -c "pip install --no-cache-dir -r requirements.txt &&
-             uvicorn app:app --host 0.0.0.0 --port 8001"
+    build:
+      context: .
+      dockerfile: local_model_service/Dockerfile
+      args:
+        DAM_REPO_URL: ${DAM_REPO_URL:-https://huggingface.co/KintsugiHealth/dam}
+        DAM_REPO_REF: ${DAM_REPO_REF:-main}
     ports:
       - "8001:8001"
-    environment:
-      # The DAM repo is expected to be cloned on the host and mounted below.
-      PYTHONPATH: /opt/dam
-    volumes:
-      - ./:/workspace
-      - ${DAM_REPO_PATH:-./dam-model}:/opt/dam
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "micromamba",
+          "run",
+          "-n",
+          "dam",
+          "python",
+          "-c",
+          "import urllib.request,sys; r=urllib.request.urlopen('http://127.0.0.1:8001/health', timeout=5); sys.exit(0 if r.status==200 else 1)"
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 90s

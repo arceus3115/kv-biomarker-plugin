@@ -22,6 +22,26 @@
         margin-right: 0.5rem;
         margin-bottom: 0.5rem;
       }
+      .meter-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin: 0.75rem 0;
+      }
+      .meter-shell {
+        width: 100%;
+        height: 14px;
+        border-radius: 999px;
+        border: 1px solid #d0d7de;
+        background: #f6f8fa;
+        overflow: hidden;
+      }
+      .meter-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #22c55e, #eab308, #ef4444);
+        transition: width 100ms linear;
+      }
       pre {
         background: #f6f8fa;
         padding: 1rem;
@@ -43,6 +63,12 @@
     <section class="card">
       <h2>Record</h2>
       <p>Duration: <strong id="duration">0.0s</strong></p>
+      <div class="meter-row" aria-live="polite">
+        <div class="meter-shell">
+          <div id="volumeMeter" class="meter-fill"></div>
+        </div>
+        <strong id="volumeLabel">silent</strong>
+      </div>
       <button id="startBtn">Start recording</button>
       <button id="stopBtn" disabled>Stop recording</button>
       <button id="analyzeBtn" disabled>Analyze</button>

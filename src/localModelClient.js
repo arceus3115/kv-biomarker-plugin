@@ -2,6 +2,40 @@ function toUrl(baseUrl, path) {
   return new URL(path, baseUrl).toString();
 }
 
+function messageFromErrorPayload(payload) {
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+
+  if (typeof payload.detail === "string") {
+    return payload.detail;
+  }
+
+  if (Array.isArray(payload.detail)) {
+    const parts = payload.detail
+      .map((item) => {
+        if (typeof item === "string") {
+          return item;
+        }
+        if (item && typeof item.msg === "string") {
+          return item.msg;
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    if (parts.length > 0) {
+      return parts.join("; ");
+    }
+  }
+
+  if (typeof payload.message === "string") {
+    return payload.message;
+  }
+
+  return null;
+}
+
 function createLocalModelClient(localModelConfig) {
   async function infer({ buffer, mimeType, filename, durationMs }) {
     const form = new FormData();
@@ -26,10 +60,19 @@ function createLocalModelClient(localModelConfig) {
         }
       );
 
-      const payload = await response.json();
+      let payload;
+      try {
+        payload = await response.json();
+      } catch {
+        throw new Error(
+          `Local model service returned ${response.status} (non-JSON body)`
+        );
+      }
 
       if (!response.ok) {
-        throw new Error(payload.message || "Local model service error");
+        throw new Error(
+          messageFromErrorPayload(payload) || "Local model service error"
+        );
       }
 
       return payload;

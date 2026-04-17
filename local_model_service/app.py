@@ -1,5 +1,8 @@
+import logging
 import os
 import tempfile
+import time
+import uuid
 from contextlib import suppress
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -14,6 +17,8 @@ except ImportError as exc:
 
 app = FastAPI(title="Local DAM Inference Service")
 pipeline = Pipeline()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("local_model_service")
 
 
 @app.get("/health")
@@ -27,6 +32,8 @@ async def infer(
     quantize: bool = Form(True),
     duration_ms: int = Form(0),
 ):
+    request_id = uuid.uuid4().hex[:8]
+    started_at = time.time()
     if duration_ms < 30_000:
         raise HTTPException(
             status_code=400,
@@ -42,6 +49,14 @@ async def infer(
         raise HTTPException(status_code=415, detail="Unsupported audio type.")
 
     content = await audio.read()
+    logger.info(
+        "[infer:%s] request mime=%s bytes=%s duration_ms=%s quantize=%s",
+        request_id,
+        audio.content_type,
+        len(content),
+        duration_ms,
+        quantize,
+    )
     suffix = ".wav" if "wav" in (audio.content_type or "") else ".webm"
     temp_path = None
 
@@ -54,11 +69,24 @@ async def infer(
 
         result = pipeline.run_on_file(temp_path, quantize=quantize)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Inference failed: {exc}") from exc
+        elapsed_ms = int((time.time() - started_at) * 1000)
+        logger.exception("[infer:%s] failed in %sms", request_id, elapsed_ms)
+        raise HTTPException(
+            status_code=500, detail=f"Inference failed [{request_id}]: {exc}"
+        ) from exc
     finally:
         if temp_path:
             with suppress(FileNotFoundError):
                 os.remove(temp_path)
+
+    elapsed_ms = int((time.time() - started_at) * 1000)
+    logger.info(
+        "[infer:%s] completed in %sms depression=%s anxiety=%s",
+        request_id,
+        elapsed_ms,
+        result.get("depression"),
+        result.get("anxiety"),
+    )
 
     return {
         "depression": result.get("depression"),
