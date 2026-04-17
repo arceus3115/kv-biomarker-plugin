@@ -2,7 +2,7 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 const express = require("express");
 const multer = require("multer");
-const { normalizeFindings } = require("./normalizeKvResponse");
+const { normalizeFindings } = require("./normalizeFindings");
 
 const ACCEPTED_MIME_TYPES = new Set([
   "audio/webm",

@@ -1,5 +1,6 @@
 import logging
 import os
+import subprocess
 import tempfile
 import time
 import uuid
@@ -19,6 +20,33 @@ app = FastAPI(title="Local DAM Inference Service")
 pipeline = Pipeline()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("local_model_service")
+
+
+def convert_audio_to_wav(input_path: str, output_path: str) -> None:
+    """Normalize uploaded audio to 16kHz mono PCM WAV for DAM inference."""
+    try:
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-i",
+                input_path,
+                "-ac",
+                "1",
+                "-ar",
+                "16000",
+                output_path,
+            ],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+    except FileNotFoundError as exc:
+        raise RuntimeError("ffmpeg is not installed in the model service image.") from exc
+    except subprocess.CalledProcessError as exc:
+        stderr = (exc.stderr or "").strip()
+        raise RuntimeError(f"ffmpeg conversion failed: {stderr}") from exc
 
 
 @app.get("/health")
@@ -59,6 +87,7 @@ async def infer(
     )
     suffix = ".wav" if "wav" in (audio.content_type or "") else ".webm"
     temp_path = None
+    converted_wav_path = None
 
     try:
         # The published DAM pipeline exposes run_on_file(path), so we use
@@ -67,7 +96,11 @@ async def infer(
             temp_file.write(content)
             temp_path = temp_file.name
 
-        result = pipeline.run_on_file(temp_path, quantize=quantize)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as wav_file:
+            converted_wav_path = wav_file.name
+
+        convert_audio_to_wav(temp_path, converted_wav_path)
+        result = pipeline.run_on_file(converted_wav_path, quantize=quantize)
     except Exception as exc:
         elapsed_ms = int((time.time() - started_at) * 1000)
         logger.exception("[infer:%s] failed in %sms", request_id, elapsed_ms)
@@ -78,6 +111,9 @@ async def infer(
         if temp_path:
             with suppress(FileNotFoundError):
                 os.remove(temp_path)
+        if converted_wav_path:
+            with suppress(FileNotFoundError):
+                os.remove(converted_wav_path)
 
     elapsed_ms = int((time.time() - started_at) * 1000)
     logger.info(

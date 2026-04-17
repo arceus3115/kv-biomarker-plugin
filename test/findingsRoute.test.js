@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 const request = require("supertest");
 const { createApp } = require("../src/appFactory");
 
-function makeKvClient() {
+function makeLocalModelClient() {
   return {
     async infer() {
       return {
@@ -17,7 +17,7 @@ function makeKvClient() {
 
 test("POST /api/findings returns normalized findings on success", async () => {
   const app = createApp({
-    localModelClient: makeKvClient(),
+    localModelClient: makeLocalModelClient(),
     uploadConfig: { maxBytes: 10 * 1024 * 1024, minDurationMs: 30000 },
   });
 
@@ -39,7 +39,7 @@ test("POST /api/findings returns normalized findings on success", async () => {
 
 test("POST /api/findings rejects short recordings", async () => {
   const app = createApp({
-    localModelClient: makeKvClient(),
+    localModelClient: makeLocalModelClient(),
     uploadConfig: { maxBytes: 10 * 1024 * 1024, minDurationMs: 30000 },
   });
 
@@ -57,7 +57,7 @@ test("POST /api/findings rejects short recordings", async () => {
 
 test("POST /api/findings rejects unsupported MIME type", async () => {
   const app = createApp({
-    localModelClient: makeKvClient(),
+    localModelClient: makeLocalModelClient(),
     uploadConfig: { maxBytes: 10 * 1024 * 1024, minDurationMs: 30000 },
   });
 

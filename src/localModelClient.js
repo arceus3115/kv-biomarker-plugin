@@ -76,6 +76,13 @@ function createLocalModelClient(localModelConfig) {
       }
 
       return payload;
+    } catch (error) {
+      if (error && error.name === "AbortError") {
+        throw new Error(
+          `Local model service timed out after ${localModelConfig.timeoutMs}ms`
+        );
+      }
+      throw error;
     } finally {
       clearTimeout(timeout);
     }

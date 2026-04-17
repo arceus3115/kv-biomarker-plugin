@@ -125,3 +125,36 @@ test("infer throws when response body is not JSON", async () => {
     global.fetch = originalFetch;
   }
 });
+
+test("infer surfaces a readable timeout error", async () => {
+  const originalFetch = global.fetch;
+  global.fetch = (_, options) =>
+    new Promise((_, reject) => {
+      options.signal.addEventListener("abort", () => {
+        const abortError = new Error("aborted");
+        abortError.name = "AbortError";
+        reject(abortError);
+      });
+    });
+
+  const client = createLocalModelClient({
+    serviceUrl: "http://127.0.0.1:8001",
+    inferPath: "/infer",
+    timeoutMs: 5,
+    quantize: true,
+  });
+
+  try {
+    await client.infer({
+      buffer: Buffer.from("x"),
+      mimeType: "audio/webm",
+      filename: "a.webm",
+      durationMs: 30000,
+    });
+    assert.fail("expected timeout throw");
+  } catch (error) {
+    assert.match(error.message, /timed out after 5ms/);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});

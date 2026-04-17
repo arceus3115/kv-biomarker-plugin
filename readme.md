@@ -24,6 +24,10 @@ docker compose up --build
 2. Open `http://localhost:3000`.
 3. Record at least 30 seconds of audio, then click **Analyze**.
 
+OpenBLAS/OpenMP warning mitigation is preconfigured in the model image by setting:
+`OPENBLAS_NUM_THREADS=1`, `OMP_NUM_THREADS=1`, `MKL_NUM_THREADS=1`, and
+`NUMEXPR_NUM_THREADS=1`.
+
 Optional model source overrides:
 
 ```bash
@@ -86,7 +90,7 @@ Main components:
 - `public/`: browser recording UI and submission flow.
 - `src/appFactory.js`: API routes, upload validation, and error handling.
 - `src/localModelClient.js`: outbound call to local Python service with timeout control.
-- `src/normalizeKvResponse.js`: stable app response mapping and severity labels.
+- `src/normalizeFindings.js`: stable app response mapping and severity labels.
 - `local_model_service/app.py`: DAM wrapper service with `/health` and `/infer`.
 - `docker-compose.yml`: dual-service orchestration with health-gated startup.
 

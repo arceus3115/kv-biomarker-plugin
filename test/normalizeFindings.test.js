@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { normalizeFindings } = require("../src/normalizeKvResponse");
+const { normalizeFindings } = require("../src/normalizeFindings");
 
 test("normalizeFindings maps vendor response fields to app contract", () => {
   const payload = normalizeFindings({

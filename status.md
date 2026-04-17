@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-04-16
+Last updated: 2026-04-17
 
 ## Overall Status
 
@@ -34,7 +34,7 @@ Last updated: 2026-04-16
 ### 3) Local model integration
 
 - `src/localModelClient.js` calls the Python model service with timeout and abort handling.
-- `src/normalizeKvResponse.js` maps raw model values to:
+- `src/normalizeFindings.js` maps raw model values to:
   - depression severity: `no_depression | mild_to_moderate | severe`
   - anxiety severity: `no_anxiety | mild | moderate | severe`
 - Response contract includes vendor metadata:
@@ -58,7 +58,7 @@ Last updated: 2026-04-16
   - successful normalized findings response,
   - rejection of short recordings,
   - rejection of unsupported MIME type.
-- `test/normalizeKvResponse.test.js` verifies severity mapping and response shape.
+- `test/normalizeFindings.test.js` verifies severity mapping and response shape.
 
 ## Startup Status
 
