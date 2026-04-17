@@ -2,7 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const { createLocalModelClient } = require("../src/localModelClient");
 
-test("infer surfaces FastAPI string detail on non-OK response", async () => {
+test("startInferenceJob surfaces FastAPI string detail on non-OK response", async () => {
   const originalFetch = global.fetch;
   global.fetch = async () => ({
     ok: false,
@@ -12,13 +12,12 @@ test("infer surfaces FastAPI string detail on non-OK response", async () => {
 
   const client = createLocalModelClient({
     serviceUrl: "http://127.0.0.1:8001",
-    inferPath: "/infer",
     timeoutMs: 5000,
     quantize: true,
   });
 
   try {
-    await client.infer({
+    await client.startInferenceJob({
       buffer: Buffer.from("x"),
       mimeType: "audio/webm",
       filename: "a.webm",
@@ -32,7 +31,7 @@ test("infer surfaces FastAPI string detail on non-OK response", async () => {
   }
 });
 
-test("infer surfaces FastAPI validation detail array on non-OK response", async () => {
+test("startInferenceJob surfaces FastAPI validation detail array on non-OK response", async () => {
   const originalFetch = global.fetch;
   global.fetch = async () => ({
     ok: false,
@@ -44,13 +43,12 @@ test("infer surfaces FastAPI validation detail array on non-OK response", async 
 
   const client = createLocalModelClient({
     serviceUrl: "http://127.0.0.1:8001",
-    inferPath: "/infer",
     timeoutMs: 5000,
     quantize: true,
   });
 
   try {
-    await client.infer({
+    await client.startInferenceJob({
       buffer: Buffer.from("x"),
       mimeType: "audio/webm",
       filename: "a.webm",
@@ -64,7 +62,7 @@ test("infer surfaces FastAPI validation detail array on non-OK response", async 
   }
 });
 
-test("infer falls back to message when detail is absent", async () => {
+test("startInferenceJob falls back to message when detail is absent", async () => {
   const originalFetch = global.fetch;
   global.fetch = async () => ({
     ok: false,
@@ -74,13 +72,12 @@ test("infer falls back to message when detail is absent", async () => {
 
   const client = createLocalModelClient({
     serviceUrl: "http://127.0.0.1:8001",
-    inferPath: "/infer",
     timeoutMs: 5000,
     quantize: true,
   });
 
   try {
-    await client.infer({
+    await client.startInferenceJob({
       buffer: Buffer.from("x"),
       mimeType: "audio/webm",
       filename: "a.webm",
@@ -94,7 +91,7 @@ test("infer falls back to message when detail is absent", async () => {
   }
 });
 
-test("infer throws when response body is not JSON", async () => {
+test("getInferenceJob throws when response body is not JSON", async () => {
   const originalFetch = global.fetch;
   global.fetch = async () => ({
     ok: false,
@@ -106,18 +103,12 @@ test("infer throws when response body is not JSON", async () => {
 
   const client = createLocalModelClient({
     serviceUrl: "http://127.0.0.1:8001",
-    inferPath: "/infer",
     timeoutMs: 5000,
     quantize: true,
   });
 
   try {
-    await client.infer({
-      buffer: Buffer.from("x"),
-      mimeType: "audio/webm",
-      filename: "a.webm",
-      durationMs: 30000,
-    });
+    await client.getInferenceJob("abc123");
     assert.fail("expected throw");
   } catch (error) {
     assert.match(error.message, /Local model service returned 502/);
@@ -126,7 +117,7 @@ test("infer throws when response body is not JSON", async () => {
   }
 });
 
-test("infer surfaces a readable timeout error", async () => {
+test("startInferenceJob surfaces a readable timeout error", async () => {
   const originalFetch = global.fetch;
   global.fetch = (_, options) =>
     new Promise((_, reject) => {
@@ -139,13 +130,12 @@ test("infer surfaces a readable timeout error", async () => {
 
   const client = createLocalModelClient({
     serviceUrl: "http://127.0.0.1:8001",
-    inferPath: "/infer",
     timeoutMs: 5,
     quantize: true,
   });
 
   try {
-    await client.infer({
+    await client.startInferenceJob({
       buffer: Buffer.from("x"),
       mimeType: "audio/webm",
       filename: "a.webm",
@@ -154,6 +144,34 @@ test("infer surfaces a readable timeout error", async () => {
     assert.fail("expected timeout throw");
   } catch (error) {
     assert.match(error.message, /timed out after 5ms/);
+  } finally {
+    global.fetch = originalFetch;
+  }
+});
+
+test("getInferenceJob returns parsed payload on success", async () => {
+  const originalFetch = global.fetch;
+  global.fetch = async () => ({
+    ok: true,
+    status: 200,
+    json: async () => ({
+      job_id: "job-1",
+      status: "running",
+      phase: "running_inference",
+      progress: 70,
+    }),
+  });
+
+  const client = createLocalModelClient({
+    serviceUrl: "http://127.0.0.1:8001",
+    timeoutMs: 5000,
+    quantize: true,
+  });
+
+  try {
+    const payload = await client.getInferenceJob("job-1");
+    assert.equal(payload.status, "running");
+    assert.equal(payload.progress, 70);
   } finally {
     global.fetch = originalFetch;
   }

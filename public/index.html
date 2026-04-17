@@ -42,6 +42,112 @@
         background: linear-gradient(90deg, #22c55e, #eab308, #ef4444);
         transition: width 100ms linear;
       }
+      .analysis-shell {
+        width: 100%;
+        height: 12px;
+        border-radius: 999px;
+        border: 1px solid #d0d7de;
+        background: #f6f8fa;
+        overflow: hidden;
+      }
+      .analysis-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #3b82f6, #06b6d4);
+        transition: width 200ms linear;
+      }
+      .analysis-meta {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 0.5rem;
+        color: #666;
+        font-size: 0.9rem;
+      }
+      .stage-list {
+        margin-top: 0.9rem;
+        display: grid;
+        gap: 0.6rem;
+      }
+      .stage-row {
+        display: grid;
+        grid-template-columns: 120px 1fr 90px;
+        align-items: center;
+        gap: 0.6rem;
+      }
+      .stage-name {
+        font-size: 0.9rem;
+      }
+      .stage-shell {
+        width: 100%;
+        height: 10px;
+        border-radius: 999px;
+        border: 1px solid #d0d7de;
+        background: #f6f8fa;
+        overflow: hidden;
+      }
+      .stage-fill {
+        width: 0%;
+        height: 100%;
+        transition: width 180ms linear;
+        background: #94a3b8;
+      }
+      .stage-fill.running {
+        background: linear-gradient(90deg, #3b82f6, #06b6d4);
+        animation: stagePulse 1.2s ease-in-out infinite;
+      }
+      .stage-fill.done {
+        background: linear-gradient(90deg, #16a34a, #22c55e);
+      }
+      .stage-fill.failed {
+        background: linear-gradient(90deg, #dc2626, #ef4444);
+      }
+      .stage-state {
+        font-size: 0.85rem;
+        color: #666;
+        text-align: right;
+      }
+      @keyframes stagePulse {
+        0% {
+          opacity: 0.5;
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0.5;
+        }
+      }
+      .hidden {
+        display: none;
+      }
+      .results-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 0.75rem;
+      }
+      .result-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.75rem;
+        background: #fcfcfd;
+      }
+      .result-card h3 {
+        margin: 0 0 0.4rem 0;
+        font-size: 1rem;
+      }
+      .result-main {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin: 0 0 0.2rem 0;
+      }
+      .result-sub {
+        margin: 0;
+        color: #666;
+        font-size: 0.9rem;
+      }
+      details {
+        margin-top: 0.75rem;
+      }
       pre {
         background: #f6f8fa;
         padding: 1rem;
@@ -77,7 +183,59 @@
 
     <section class="card">
       <h2>Findings</h2>
-      <pre id="findings">No findings yet.</pre>
+      <div id="analysisProgressWrap" class="hidden">
+        <div class="analysis-shell" aria-live="polite">
+          <div id="analysisProgressFill" class="analysis-fill"></div>
+        </div>
+        <div class="analysis-meta">
+          <span id="analysisPhase">Preparing...</span>
+          <span id="analysisElapsed">0.0s</span>
+        </div>
+        <div class="stage-list">
+          <div class="stage-row">
+            <span class="stage-name">Upload</span>
+            <div class="stage-shell">
+              <div id="stageUploadFill" class="stage-fill"></div>
+            </div>
+            <span id="stageUploadState" class="stage-state">Pending</span>
+          </div>
+          <div class="stage-row">
+            <span class="stage-name">Convert</span>
+            <div class="stage-shell">
+              <div id="stageConvertFill" class="stage-fill"></div>
+            </div>
+            <span id="stageConvertState" class="stage-state">Pending</span>
+          </div>
+          <div class="stage-row">
+            <span class="stage-name">Infer</span>
+            <div class="stage-shell">
+              <div id="stageInferFill" class="stage-fill"></div>
+            </div>
+            <span id="stageInferState" class="stage-state">Pending</span>
+          </div>
+        </div>
+      </div>
+
+      <div id="resultsSummary" class="hidden">
+        <div class="results-grid">
+          <article class="result-card">
+            <h3>Depression</h3>
+            <p id="depressionSeverity" class="result-main">-</p>
+            <p id="depressionScore" class="result-sub">Score: -</p>
+          </article>
+          <article class="result-card">
+            <h3>Anxiety</h3>
+            <p id="anxietySeverity" class="result-main">-</p>
+            <p id="anxietyScore" class="result-sub">Score: -</p>
+          </article>
+        </div>
+        <p id="modelMeta" class="muted"></p>
+      </div>
+
+      <details>
+        <summary>Raw response (debug)</summary>
+        <pre id="findings">No findings yet.</pre>
+      </details>
     </section>
 
     <script src="/app.js" defer></script>

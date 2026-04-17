@@ -7,7 +7,6 @@ const config = {
   port: parseNumber(process.env.PORT, 3000),
   localModel: {
     serviceUrl: process.env.LOCAL_MODEL_SERVICE_URL || "http://127.0.0.1:8001",
-    inferPath: process.env.LOCAL_MODEL_INFER_PATH || "/infer",
     timeoutMs: parseNumber(process.env.LOCAL_MODEL_TIMEOUT_MS, 120000),
     quantize: process.env.LOCAL_MODEL_QUANTIZE !== "false",
   },

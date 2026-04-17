@@ -43,7 +43,6 @@ From `.env.example` and compose:
 
 - `PORT=3000`
 - `LOCAL_MODEL_SERVICE_URL=http://127.0.0.1:8001` (local) / `http://local-model-service:8001` (compose)
-- `LOCAL_MODEL_INFER_PATH=/infer`
 - `LOCAL_MODEL_TIMEOUT_MS=120000`
 - `LOCAL_MODEL_QUANTIZE=true`
 - `MAX_UPLOAD_BYTES=10485760`

@@ -8,7 +8,6 @@ services:
     environment:
       PORT: 3000
       LOCAL_MODEL_SERVICE_URL: http://local-model-service:8001
-      LOCAL_MODEL_INFER_PATH: /infer
       LOCAL_MODEL_TIMEOUT_MS: 120000
       LOCAL_MODEL_QUANTIZE: "true"
       MAX_UPLOAD_BYTES: 10485760
@@ -16,6 +15,7 @@ services:
     depends_on:
       local-model-service:
         condition: service_healthy
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 15s
@@ -32,6 +32,10 @@ services:
         DAM_REPO_REF: ${DAM_REPO_REF:-main}
     ports:
       - "8001:8001"
+    environment:
+      MAX_AUDIO_DURATION_MS: ${MAX_AUDIO_DURATION_MS:-180000}
+      MAX_INFERENCE_SECONDS: ${MAX_INFERENCE_SECONDS:-90}
+    restart: unless-stopped
     healthcheck:
       test:
         [

@@ -26,6 +26,12 @@ uvicorn app:app --host 127.0.0.1 --port 8001 --reload
 ## 3) Endpoints
 
 - `GET /health`
+- `POST /jobs` (async inference job)
+  - multipart form:
+    - `audio` (webm/wav)
+    - `duration_ms` (integer)
+    - `quantize` (true/false)
+- `GET /jobs/{job_id}` (poll job milestones and result)
 - `POST /infer`
   - multipart form:
     - `audio` (webm/wav)

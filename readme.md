@@ -78,10 +78,10 @@ npm start
 
 ```text
 Browser Recorder (public/app.js)
-  -> POST /api/findings (Node/Express)
-  -> local model client (multipart call)
-  -> POST /infer (FastAPI)
-  -> DAM Pipeline().run_on_file(...)
+  -> POST /api/findings (Node/Express, create async job)
+  -> POST /jobs (FastAPI, model job created)
+  -> polling GET /api/findings/:requestId/status (Node)
+  -> GET /jobs/:job_id (FastAPI status and milestones)
   -> normalized findings response
 ```
 
@@ -89,9 +89,9 @@ Main components:
 
 - `public/`: browser recording UI and submission flow.
 - `src/appFactory.js`: API routes, upload validation, and error handling.
-- `src/localModelClient.js`: outbound call to local Python service with timeout control.
+- `src/localModelClient.js`: outbound call to local Python service with timeout control and job polling support.
 - `src/normalizeFindings.js`: stable app response mapping and severity labels.
-- `local_model_service/app.py`: DAM wrapper service with `/health` and `/infer`.
+- `local_model_service/app.py`: DAM wrapper service with `/health`, `/jobs`, `/jobs/{id}`, and `/infer`.
 - `docker-compose.yml`: dual-service orchestration with health-gated startup.
 
 ## Future Steps
